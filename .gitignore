@@ -1,0 +1,39 @@
+WITH 
+Ordertable AS
+(SELECT Month(OrderDate) thang
+, Year(OrderDate) nam
+, COUNT(distinct SalesOrderNumber) as No_of_orders
+, SUM(SalesAmount) Total_order_sales
+FROM FactInternetSales
+GROUP BY Month(OrderDate), Year(OrderDate)),
+
+Shiptable AS
+(SELECT Month(ShipDate) thang
+, Year(ShipDate) nam
+, COUNT(distinct SalesOrderNumber) as No_of_invoices
+, SUM(SalesAmount) Total_ship_sales
+FROM FactInternetSales
+GROUP BY Month(ShipDate), Year(ShipDate)),
+
+Duetable AS
+(SELECT Month(DueDate) thang
+, Year(DueDate) nam
+, COUNT(distinct SalesOrderNumber) as No_of_expired
+, SUM(SalesAmount) Total_due_sales
+FROM FactInternetSales
+GROUP BY Month(DueDate), Year(DueDate))
+
+SELECT COALESCE(O.thang, S.thang, D.thang) thang
+, COALESCE(O.nam, S.nam, D.nam) nam
+, No_of_orders as 'Number of orders'
+, No_of_invoices as 'Number of shipped invoices'
+, No_of_expired as 'Number of expired orders'
+, Total_order_sales
+, Total_ship_sales
+, Total_due_sales
+FROM Ordertable O
+    FULL OUTER JOIN Shiptable S
+    ON O.thang = S.thang and O.nam = S.nam 
+    FULL OUTER JOIN Duetable D
+    ON O.thang = D.thang and O.nam = D.nam
+ORDER BY thang, nam
